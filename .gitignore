@@ -1,0 +1,44 @@
+# Node
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Prisma
+.prisma/
+node_modules/.prisma/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+
+# Temp
+tmp/
+temp/
+
+# Lock files (opcional - equipe decide)
+# package-lock.json
+# yarn.lock
