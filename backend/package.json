@@ -2,9 +2,15 @@
   "name": "backend",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "node --env-file=.env prisma/seed.js",
+    "db:studio": "prisma studio --url $DATABASE_URL"
   },
   "keywords": [],
   "author": "",
@@ -34,6 +40,6 @@
     "uuid": "^13.0.0"
   },
   "prisma": {
-    "seed": "node prisma/seed.js"
+    "seed": "node --env-file=.env prisma/seed.js"
   }
 }
