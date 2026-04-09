@@ -1,6 +1,6 @@
 // src/controllers/auth.controller.js
-import bcrypt            from "bcryptjs";
-import { prisma }        from "../lib/prisma.js";
+import bcrypt             from "bcryptjs";
+import { prisma }         from "../lib/prisma.js";
 import { generateTokens } from "../middleware/errorHandler.js";
 import { AppError, catchAsync } from "../utils/AppError.js";
 
@@ -54,8 +54,10 @@ export const register = catchAsync(async (req, res) => {
 export const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
 
+  // omitPassword: false para recuperar o hash nesta query específica
   const user = await prisma.user.findUnique({
-    where: { email },
+    where:  { email },
+    omit:   { password: false },   // sobrescreve o omit global só aqui
     include: {
       qaProfile:        { select: { name: true, experienceLevel: true } },
       developerProfile: { select: { name: true, techStack: true } },
@@ -87,11 +89,14 @@ export const login = catchAsync(async (req, res) => {
 
   const profile = user.qaProfile || user.developerProfile;
 
+  // Remover senha do objeto antes de retornar
+  const { password: _pw, ...safeUser } = user;
+
   res.json({
     success: true,
     data: {
       accessToken,
-      user: { id: user.id, email: user.email, role: user.role, name: profile?.name, profile },
+      user: { ...safeUser, name: profile?.name, profile },
     },
   });
 });
@@ -137,7 +142,7 @@ export const logout = catchAsync(async (req, res) => {
 // ── ME ────────────────────────────────────────────
 export const getMe = catchAsync(async (req, res) => {
   const user = await prisma.user.findUnique({
-    where: { id: req.user.id },
+    where:   { id: req.user.id },
     include: { qaProfile: true, developerProfile: true },
   });
   res.json({ success: true, data: { user } });
