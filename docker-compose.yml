@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qa_postgres_dev
+    environment:
+      POSTGRES_DB: qa_platform_db
+      POSTGRES_USER: qa_user
+      POSTGRES_PASSWORD: Gener@l201
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
+
