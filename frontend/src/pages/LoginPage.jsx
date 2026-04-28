@@ -59,6 +59,7 @@ export default function LoginPage() {
 
         <div style={{ background:'var(--bg-raised)', borderRadius:'var(--radius-md)', padding:12, fontSize:'0.76rem', color:'var(--text-muted)', lineHeight:1.8 }}>
           <strong style={{ color:'var(--text-secondary)', display:'block', marginBottom:4 }}>Contas de demonstração</strong>
+          ADMIN: <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>admin@empresa.com</span><br/>
           QA: <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>qa1@empresa.com</span><br/>
           Dev: <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>dev1@empresa.com</span><br/>
           Senha: <span style={{ fontFamily:'var(--font-mono)', color:'var(--accent)' }}>Senha@123</span>

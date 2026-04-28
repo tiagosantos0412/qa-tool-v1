@@ -34,7 +34,8 @@ function StatCard({ label, value, sub, accent, icon }) {
 export default function DashboardPage() {
   const { user }  = useAuth();
   const navigate  = useNavigate();
-  const profile   = user?.qaProfile || user?.developerProfile;
+  const profile = user?.qaProfile || user?.developerProfile;
+  const firstName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'usuário';
   const hour      = new Date().getHours();
   const greet     = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
@@ -51,7 +52,7 @@ export default function DashboardPage() {
     <div className="animate-fade-in">
       <div className="mb-6">
         <h1 style={{ fontWeight:600, letterSpacing:'-0.025em', marginBottom:4 }}>
-          {greet}, {profile?.name?.split(' ')[0] || 'usuário'} 👋
+          {greet}, {firstName}  👋
         </h1>
         <p style={{ color:'var(--text-secondary)', fontSize:'0.85rem' }}>
           Aqui está o estado atual da qualidade nos seus projetos.

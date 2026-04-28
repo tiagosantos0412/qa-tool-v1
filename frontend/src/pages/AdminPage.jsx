@@ -277,6 +277,21 @@ export default function AdminPage() {
     }
   };
 
+  const handleDelete = async (user) => {
+    const profile = user.qaProfile || user.developerProfile;
+    const name    = profile?.name || user.email;
+
+    if (!confirm(`ATENÇÃO: Deletar permanentemente a conta de ${name}?\n\nEsta ação remove o usuário do banco e não pode ser desfeita.`)) return;
+
+    try {
+      await api.delete(`/admin/users/${user.id}?permanent=true`);
+      toast(`Usuário ${name} deletado permanentemente`, 'success');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    } catch (err) {
+      toast(err.response?.data?.message || 'Erro ao deletar', 'error');
+    }
+  };
+
   return (
     <div className="animate-fade-up">
 
@@ -383,11 +398,16 @@ export default function AdminPage() {
                         </button>
                         {u.isActive && (
                           <button className="btn btn-ghost btn-sm"
-                            style={{ color: 'var(--danger)' }}
+                            style={{ color: 'var(--warning)' }}
                             onClick={() => handleDeactivate(u)}>
                             Desativar
                           </button>
                         )}
+                        <button className="btn btn-ghost btn-sm"
+                          style={{ color: 'var(--danger)', borderColor: 'var(--danger-dim)' }}
+                          onClick={() => handleDelete(u)}>
+                          Deletar
+                        </button>
                       </div>
                     </td>
                   </tr>

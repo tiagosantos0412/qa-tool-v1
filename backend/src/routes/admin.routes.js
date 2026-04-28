@@ -182,20 +182,31 @@ router.patch('/users/:userId', catchAsync(async (req, res) => {
 // ── DELETE /admin/users/:userId ──────────────────
 // Desativar conta (soft delete — não apaga do banco)
 router.delete('/users/:userId', catchAsync(async (req, res) => {
-  const { userId } = req.params;
+  const { userId }    = req.params;
+  const { permanent } = req.query;
 
   if (userId === req.user.id) {
-    throw new AppError('Você não pode desativar sua própria conta', 400);
+    throw new AppError('Você não pode remover sua própria conta', 400);
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError('Usuário não encontrado', 404);
 
+  // Sempre invalida as sessões ativas primeiro
+  await prisma.refreshToken.deleteMany({ where: { userId } });
+
+  if (permanent === 'true') {
+    // Remove permanentemente — o onDelete: Cascade do Prisma
+    // apaga automaticamente qaProfile, developerProfile e refreshTokens
+    await prisma.user.delete({ where: { id: userId } });
+    return res.json({ success: true, message: 'Usuário deletado permanentemente' });
+  }
+
+  // Soft delete — só desativa a conta
   await prisma.user.update({
     where: { id: userId },
-    data: { isActive: false },
+    data:  { isActive: false },
   });
-  await prisma.refreshToken.deleteMany({ where: { userId } });
 
   res.json({ success: true, message: 'Conta desativada com sucesso' });
 }));
