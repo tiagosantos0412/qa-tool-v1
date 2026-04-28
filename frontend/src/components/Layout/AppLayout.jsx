@@ -69,6 +69,11 @@ function Sidebar() {
         </p>
         <NavLink to="/dashboard" style={linkStyle}>📊 Dashboard</NavLink>
         <NavLink to="/projects"  style={linkStyle}>📁 Projetos</NavLink>
+        {user?.role === 'ADMIN' && (
+          <NavLink to="/admin" style={linkStyle}>
+            ⚙️ Admin
+          </NavLink>
+        )}
       </div>
 
       {/* Nav do projeto ativo */}
