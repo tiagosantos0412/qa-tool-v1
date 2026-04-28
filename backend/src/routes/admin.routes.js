@@ -1,9 +1,9 @@
 // src/routes/admin.routes.js
 import { Router } from 'express';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/errorHandler.js';
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../utils/AppError.js';
-import { catchAsync } from '../utils/catchAsync.js';
+import { catchAsync } from '../utils/AppError.js';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
