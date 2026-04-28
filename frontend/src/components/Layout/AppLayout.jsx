@@ -29,10 +29,7 @@ function Topbar() {
         />
       </div>
       <div style={{ display:'flex', alignItems:'center', gap:8, marginLeft:'auto' }}>
-        <button
-          className="btn btn-primary btn-sm"
-          onClick={() => navigate('/projects')}
-        >
+        <button className="btn btn-primary btn-sm" onClick={() => navigate('/projects')}>
           + Novo
         </button>
       </div>
@@ -41,9 +38,9 @@ function Topbar() {
 }
 
 function Sidebar() {
-  const { user, logout }      = useAuth();
-  const { currentProject }    = useProject();
-  const navigate              = useNavigate();
+  const { user, logout }   = useAuth();
+  const { currentProject } = useProject();
+  const navigate           = useNavigate();
 
   const profile  = user?.qaProfile || user?.developerProfile;
   const initials = profile?.name?.split(' ').slice(0,2).map(n => n[0]).join('') || '??';
@@ -84,9 +81,10 @@ function Sidebar() {
           <p style={{ padding:'0 16px 8px', fontSize:'0.78rem', color:'var(--text-secondary)', fontFamily:'var(--font-mono)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
             {currentProject.name}
           </p>
-          <NavLink to={`/projects/${currentProject.id}`}               end style={linkStyle}>📋 Visão Geral</NavLink>
-          <NavLink to={`/projects/${currentProject.id}/test-cases`}    style={linkStyle}>🧪 Casos de Teste</NavLink>
-          <NavLink to={`/projects/${currentProject.id}/bugs`}          style={linkStyle}>🐛 Bugs</NavLink>
+          <NavLink to={`/projects/${currentProject.id}`}             end style={linkStyle}>📋 Visão Geral</NavLink>
+          <NavLink to={`/projects/${currentProject.id}/test-cases`}  style={linkStyle}>🧪 Casos de Teste</NavLink>
+          <NavLink to={`/projects/${currentProject.id}/bugs`}        style={linkStyle}>🐛 Bugs</NavLink>
+          <NavLink to={`/projects/${currentProject.id}/ai`}          style={linkStyle}>✦ Assistente IA</NavLink>
         </>
       )}
 

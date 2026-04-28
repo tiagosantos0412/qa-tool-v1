@@ -17,6 +17,7 @@ import testCaseRoutes from "./routes/testCase.routes.js";
 import bugRoutes     from "./routes/bug.routes.js";
 import cypressRoutes from "./routes/cypress.routes.js";
 import aiRoutes      from "./routes/ai.routes.js";
+import adminRoutes from './routes/admin.routes.js';
 
 // ── Middleware ────────────────────────────────────
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -55,6 +56,7 @@ app.use(`${API}/projects`,   testCaseRoutes);  // /projects/:projectId/test-case
 app.use(`${API}/projects`,   bugRoutes);       // /projects/:projectId/bugs
 app.use(`${API}/cypress`,    cypressRoutes);
 app.use(`${API}/ai`,         aiRoutes);
+app.use(`${API}/admin`, adminRoutes);
 
 // ── Health check ──────────────────────────────────
 app.get("/health", (req, res) => {

@@ -5,14 +5,16 @@ import { AuthProvider, useAuth }     from './context/contexts';
 import { ToastProvider }             from './context/contexts';
 import { ProjectProvider }           from './context/contexts';
 
-import AppLayout      from './components/Layout/AppLayout';
-import LoginPage      from './pages/LoginPage';
-import DashboardPage  from './pages/DashboardPage';
-import ProjectsPage   from './pages/ProjectsPage';
-import ProjectViewPage from './pages/ProjectViewPage';
-import TestCasesPage  from './pages/TestCasesPage';
-import BugReportPage  from './pages/BugReportPage';
-import BugDetailPage  from './pages/BugDetailPage';
+import AppLayout        from './components/Layout/AppLayout';
+import LoginPage        from './pages/LoginPage';
+import DashboardPage    from './pages/DashboardPage';
+import ProjectsPage     from './pages/ProjectsPage';
+import ProjectViewPage  from './pages/ProjectViewPage';
+import TestCasesPage    from './pages/TestCasesPage';
+import BugReportPage    from './pages/BugReportPage';
+import BugDetailPage    from './pages/BugDetailPage';
+import AIAssistantPage  from './pages/AIAssistantPage';
+import AdminPage from './pages/AdminPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,9 +57,11 @@ export default function App() {
                   <Route path="projects/:projectId/test-cases"     element={<TestCasesPage />} />
                   <Route path="projects/:projectId/bugs"           element={<BugReportPage />} />
                   <Route path="projects/:projectId/bugs/:bugId"    element={<BugDetailPage />} />
+                  <Route path="projects/:projectId/ai"             element={<AIAssistantPage />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                <Route path="admin" element={<AdminPage />} />
               </Routes>
             </BrowserRouter>
           </ProjectProvider>
