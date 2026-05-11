@@ -88,6 +88,7 @@ model BusinessRule {
   id          String     @id @default(uuid())
   ruleCode    String
   description String
+  module      String?
   projectId   String
   createdById String
   createdAt   DateTime   @default(now())
@@ -99,11 +100,11 @@ model BusinessRule {
   @@unique([projectId, ruleCode])
   @@map("business_rules")
 }
-
 model TestCase {
   id             String        @id @default(uuid())
   testCode       String
   title          String
+  module         String?
   description    String?
   steps          String[]      @default([])
   expectedResult String

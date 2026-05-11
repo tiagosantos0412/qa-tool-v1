@@ -9,12 +9,13 @@ const router = Router({ mergeParams: true });
 router.use(authenticate);
 
 router.get("/:projectId/test-cases", catchAsync(async (req, res) => {
-  const { output, riskLevel } = req.query;
+  const { output, riskLevel, module } = req.query; // Adicionado module no filtro
   const testCases = await prisma.testCase.findMany({
     where: {
       projectId: req.params.projectId,
       ...(output    && { output }),
       ...(riskLevel && { riskLevel }),
+      ...(module    && { module }), // Filtro por módulo
     },
     orderBy: { testCode: "asc" },
     include: {
@@ -27,14 +28,22 @@ router.get("/:projectId/test-cases", catchAsync(async (req, res) => {
 }));
 
 router.post("/:projectId/test-cases", catchAsync(async (req, res) => {
-  const { title, description, steps, expectedResult, output, riskLevel, businessRuleId, isAiGenerated } = req.body;
-  if (!title || !expectedResult || !output) throw new AppError("Título, resultado esperado e output são obrigatórios", 400);
+  // Adicionado module na desestruturação
+  const { title, description, steps, expectedResult, output, riskLevel, businessRuleId, isAiGenerated, module } = req.body;
+
+  if (!title || !expectedResult || !output) {
+    throw new AppError("Título, resultado esperado e output são obrigatórios", 400);
+  }
+
   const testCode = await generateTestCode(req.params.projectId);
   const testCase = await prisma.testCase.create({
     data: {
       testCode, title, description, steps: steps || [],
-      expectedResult, output, riskLevel: riskLevel || "MEDIUM",
-      projectId: req.params.projectId, createdById: req.user.id,
+      expectedResult, output,
+      riskLevel: riskLevel || "MEDIUM",
+      module: module || null, // Salvando o módulo
+      projectId: req.params.projectId,
+      createdById: req.user.id,
       businessRuleId: businessRuleId || null,
       isAiGenerated: isAiGenerated || false,
     },
@@ -57,7 +66,9 @@ router.get("/:projectId/test-cases/:testCaseId", catchAsync(async (req, res) => 
 }));
 
 router.put("/:projectId/test-cases/:testCaseId", catchAsync(async (req, res) => {
-  const { title, description, steps, expectedResult, actualResult, output, riskLevel, businessRuleId } = req.body;
+  // Adicionado module na atualização
+  const { title, description, steps, expectedResult, actualResult, output, riskLevel, businessRuleId, module } = req.body;
+
   const testCase = await prisma.testCase.update({
     where: { id: req.params.testCaseId },
     data:  {
@@ -69,6 +80,7 @@ router.put("/:projectId/test-cases/:testCaseId", catchAsync(async (req, res) => 
       ...(output         !== undefined && { output }),
       ...(riskLevel      !== undefined && { riskLevel }),
       ...(businessRuleId !== undefined && { businessRuleId }),
+      ...(module         !== undefined && { module }), // Salvando alteração do módulo
     },
   });
   res.json({ success: true, data: { testCase } });
