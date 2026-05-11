@@ -11,8 +11,15 @@ const TABS = [
 ];
 
 export default function AIAssistantPanel() {
-  const { currentProject, businessRules } = useProject();
+  const { currentProject, businessRules, loadProject } = useProject();
   const [activeTab, setActiveTab] = useState('chat');
+
+  // Alteração solicitada: Forçar atualização do projeto ao carregar o painel
+  useEffect(() => {
+    if (currentProject?.id) {
+      loadProject(currentProject.id, true);
+    }
+  }, [currentProject?.id]);
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>

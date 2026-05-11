@@ -88,8 +88,8 @@ export function ProjectProvider({ children }) {
   const [businessRules,  setBusinessRules]  = useState([]);
   const [loadingProject, setLoadingProject] = useState(false);
 
-  const loadProject = useCallback(async (projectId) => {
-    if (currentProject?.id === projectId) return currentProject;
+  const loadProject = useCallback(async (projectId, forceRefresh = false) => {
+    if (currentProject?.id === projectId && !forceRefresh) return currentProject;
     setLoadingProject(true);
     try {
       const { data } = await api.get(`/projects/${projectId}`);

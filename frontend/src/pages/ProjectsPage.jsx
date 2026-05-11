@@ -3,11 +3,17 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { api }      from '../services/api';
-import { useToast } from '../context/contexts';
-import { useAuth }  from '../context/contexts';
+import { useToast, useAuth } from '../context/contexts';
 
-function CreateModal({ onClose, onCreated }) {
-  const [form, setForm] = useState({ name:'', objective:'', actors:'', description:'' });
+function CreateModal({ onClose, onCreated, project }) {
+  // Se existir 'project', inicializamos o form com os dados dele para edição
+  const [form, setForm] = useState({
+    name: project?.name || '',
+    objective: project?.objective || '',
+    actors: project?.actors?.join(', ') || '',
+    description: project?.description || ''
+  });
+
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const set = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
@@ -16,15 +22,26 @@ function CreateModal({ onClose, onCreated }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await api.post('/projects', {
+      const payload = {
         ...form,
         actors: form.actors.split(',').map(a => a.trim()).filter(Boolean),
-      });
-      onCreated(data.data.project);
-      toast('Projeto criado!', 'success');
+      };
+
+      if (project) {
+        // Lógica de Edição
+        await api.put(`/projects/${project.id}`, payload);
+        toast('Projeto atualizado!', 'success');
+      } else {
+        // Lógica de Criação
+        const { data } = await api.post('/projects', payload);
+        onCreated(data.data.project);
+        toast('Projeto criado!', 'success');
+      }
+
+      onCreated();
       onClose();
     } catch (err) {
-      toast(err.response?.data?.message || 'Erro ao criar projeto', 'error');
+      toast(err.response?.data?.message || 'Erro ao processar projeto', 'error');
     } finally {
       setLoading(false);
     }
@@ -34,7 +51,7 @@ function CreateModal({ onClose, onCreated }) {
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal animate-fade-up">
         <div className="modal-header">
-          <h2 style={{ fontSize:'1rem', fontWeight:600 }}>Novo projeto</h2>
+          <h2 style={{ fontSize:'1rem', fontWeight:600 }}>{project ? 'Editar projeto' : 'Novo projeto'}</h2>
           <button onClick={onClose} style={{ color:'var(--text-muted)', fontSize:'1.2rem' }}>✕</button>
         </div>
         <form onSubmit={handleSubmit} className="modal-body">
@@ -57,7 +74,7 @@ function CreateModal({ onClose, onCreated }) {
           <div className="modal-footer">
             <button type="button" className="btn btn-ghost" onClick={onClose}>Cancelar</button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? <span className="spinner" /> : 'Criar projeto'}
+              {loading ? <span className="spinner" /> : project ? 'Salvar alterações' : 'Criar projeto'}
             </button>
           </div>
         </form>
@@ -68,10 +85,13 @@ function CreateModal({ onClose, onCreated }) {
 
 export default function ProjectsPage() {
   const [showModal, setShowModal] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
   const [search, setSearch]       = useState('');
+
   const queryClient = useQueryClient();
   const navigate    = useNavigate();
-  const { isQA }    = useAuth();
+  const { user, isQA } = useAuth();
+  const { toast } = useToast();
 
   const { data, isLoading } = useQuery({
     queryKey: ['projects', search],
@@ -82,7 +102,18 @@ export default function ProjectsPage() {
 
   const handleCreated = (project) => {
     queryClient.invalidateQueries({ queryKey: ['projects'] });
-    navigate(`/projects/${project.id}`);
+    if (project) navigate(`/projects/${project.id}`);
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    if (!confirm('Deletar este projeto? Todos os bugs, testes e regras serão removidos.')) return;
+    try {
+      await api.delete(`/projects/${projectId}`);
+      toast('Projeto deletado', 'success');
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    } catch (err) {
+      toast(err.response?.data?.message || 'Erro ao deletar', 'error');
+    }
   };
 
   return (
@@ -111,40 +142,70 @@ export default function ProjectsPage() {
         </div>
       ) : (
         <div className="stagger" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:14 }}>
-          {projects.map(p => (
-            <div key={p.id} className="card" style={{ cursor:'pointer', transition:'border-color var(--t-fast), background var(--t-fast)' }}
-              onClick={() => navigate(`/projects/${p.id}`)}
-              onMouseEnter={e => { e.currentTarget.style.borderColor='var(--border-strong)'; e.currentTarget.style.background='var(--bg-raised)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor=''; e.currentTarget.style.background=''; }}
-            >
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
-                <h3 style={{ fontSize:'0.9rem', fontWeight:600 }}>{p.name}</h3>
-                {p.isArchived && <span className="badge badge-neutral">Arquivado</span>}
-              </div>
-              <p style={{ fontSize:'0.8rem', color:'var(--text-secondary)', marginBottom:14, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-                {p.objective}
-              </p>
-              {p.actors?.length > 0 && (
-                <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:14 }}>
-                  {p.actors.slice(0,3).map(a => (
-                    <span key={a} style={{ fontSize:'0.7rem', padding:'2px 8px', background:'var(--bg-overlay)', border:'1px solid var(--border-subtle)', borderRadius:4, color:'var(--text-muted)' }}>{a}</span>
+          {projects.map(p => {
+            // Lógica de permissão: Admin ou dono do projeto
+            const canEdit = user?.role === 'ADMIN' || p.createdById === user?.id;
+
+            return (
+              <div key={p.id} className="card" style={{ cursor:'pointer', transition:'border-color var(--t-fast), background var(--t-fast)' }}
+                onClick={() => navigate(`/projects/${p.id}`)}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='var(--border-strong)'; e.currentTarget.style.background='var(--bg-raised)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor=''; e.currentTarget.style.background=''; }}
+              >
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+                  <h3 style={{ fontSize:'0.9rem', fontWeight:600 }}>{p.name}</h3>
+                  {p.isArchived && <span className="badge badge-neutral">Arquivado</span>}
+                </div>
+                <p style={{ fontSize:'0.8rem', color:'var(--text-secondary)', marginBottom:14, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
+                  {p.objective}
+                </p>
+                {p.actors?.length > 0 && (
+                  <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:14 }}>
+                    {p.actors.slice(0,3).map(a => (
+                      <span key={a} style={{ fontSize:'0.7rem', padding:'2px 8px', background:'var(--bg-overlay)', border:'1px solid var(--border-subtle)', borderRadius:4, color:'var(--text-muted)' }}>{a}</span>
+                    ))}
+                  </div>
+                )}
+                <div style={{ display:'flex', gap:20, borderTop:'1px solid var(--border-subtle)', paddingTop:12 }}>
+                  {[{ l:'Regras', v: p._count?.businessRules||0 }, { l:'Testes', v: p._count?.testCases||0 }, { l:'Bugs', v: p._count?.bugs||0, danger:true }].map(m => (
+                    <div key={m.l}>
+                      <p style={{ fontSize:'1rem', fontWeight:600, fontFamily:'var(--font-mono)', color: m.danger && m.v > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>{m.v}</p>
+                      <p style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{m.l}</p>
+                    </div>
                   ))}
                 </div>
-              )}
-              <div style={{ display:'flex', gap:20, borderTop:'1px solid var(--border-subtle)', paddingTop:12 }}>
-                {[{ l:'Regras', v: p._count?.businessRules||0 }, { l:'Testes', v: p._count?.testCases||0 }, { l:'Bugs', v: p._count?.bugs||0, danger:true }].map(m => (
-                  <div key={m.l}>
-                    <p style={{ fontSize:'1rem', fontWeight:600, fontFamily:'var(--font-mono)', color: m.danger && m.v > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>{m.v}</p>
-                    <p style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{m.l}</p>
+
+                {/* Bloco de Ações Condicional */}
+                {canEdit && (
+                  <div style={{ display: 'flex', gap: 6, marginTop: 12, borderTop: '1px solid var(--border-subtle)', paddingTop: 10 }}>
+                    <button className="btn btn-ghost btn-sm"
+                      style={{ fontSize: '0.75rem' }}
+                      onClick={e => { e.stopPropagation(); setEditingProject(p); }}>
+                      Editar
+                    </button>
+                    <button className="btn btn-ghost btn-sm"
+                      style={{ color: 'var(--danger)', fontSize: '0.75rem' }}
+                      onClick={e => { e.stopPropagation(); handleDeleteProject(p.id); }}>
+                      Deletar
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
+      {/* Modais */}
       {showModal && <CreateModal onClose={() => setShowModal(false)} onCreated={handleCreated} />}
+
+      {editingProject && (
+        <CreateModal
+          project={editingProject}
+          onClose={() => setEditingProject(null)}
+          onCreated={handleCreated}
+        />
+      )}
     </div>
   );
 }
